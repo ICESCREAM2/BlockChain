@@ -5,7 +5,8 @@ const initBlock = {
     data :'HELLO WORLD',
     prevHash : '0',
     timestamp : 1728595072246,
-    hash : '003c1526f59cd54b1646e32b2e2a46d72725807027df0ab5b0bc5f45f3debf1c'
+    nonce : 50466,
+    hash : 'b80c3a3cb715e3bebdefa5944a015ad7ed80c7d4e2eed318d294b87b1ef66bff'
 }
 
 class Blockchain{
@@ -23,10 +24,11 @@ class Blockchain{
 
     mine(){
         const newBlock = this.generateNewBlock()
-        if(this.isValidBlock(newBlock)){
+        //console.log(this.isValidBlock(newBlock))
+        if(this.isValidBlock(newBlock) && this.isValidChain()){
             this.blockchain.push(newBlock)
         }else{
-            console.log("Error! Invaild Block")
+            console.log("Error! Invaild Block",newBlock)
         }
        
     }
@@ -42,7 +44,7 @@ class Blockchain{
         //2. calculate hash until a value less than or equal to the condition is met.
         do{
             nonce++
-            hash = this.computeHash(index,prevHash,timestamp,data,nonce)
+            hash = this.computeHash(index,data,prevHash,timestamp,nonce)
             //console.log(nonce,hash)
         }while(hash.slice(0,this.difficulty) != '0'.repeat(this.difficulty))
         
@@ -51,11 +53,16 @@ class Blockchain{
             data,
             prevHash,
             timestamp,
+            nonce,
             hash
         }
     }
 
-    computeHash(index,prevHash,timestamp,data,nonce){
+    computeHashForBlock({index,data,prevHash,timestamp,nonce}){
+        return this.computeHash(index,data,prevHash,timestamp,nonce)
+    }
+
+    computeHash(index,data,prevHash,timestamp,nonce){
         return crypto
                     .createHash('sha256')
                     .update(index+prevHash+timestamp+data+nonce)
@@ -63,8 +70,9 @@ class Blockchain{
                       
     }
 
-    isValidBlock(newBlock){
-        const lastBlock = this.getLastBlock()
+    
+
+    isValidBlock(newBlock,lastBlock = this.getLastBlock()){
         if(newBlock.index !== lastBlock.index + 1){
             return false
         }else if(newBlock.timestamp <= lastBlock.timestamp){
@@ -73,14 +81,34 @@ class Blockchain{
             return false
         }else if(newBlock.hash.slice(0,this.difficulty)!=='0'.repeat(this.difficulty)){
             return false
+        }else if(this.computeHashForBlock(newBlock) !== newBlock.hash){
+            // console.log(this.computeHashForBlock(newBlock))
+            // console.log(newBlock.hash)
+            return false
         }
         return true
 
     }
 
+    isValidChain(chain = this.blockchain){
+        for(let i = chain.length - 1; i >= 1 ; i--){
+            if(!this.isValidBlock(chain[i],chain[i-1])){
+                return false
+            }
+        }
+        if(JSON.stringify(chain[0])!==JSON.stringify(initBlock)){
+            return false
+        }
+        return true
+    }
+
 }
 
 let bc = new Blockchain()
+// bc.mine()
+// bc.mine()
+
 bc.mine()
-//bc.mine()
+//bc.blockchain[1].nonce = 2
+bc.mine()
 console.log(bc.blockchain)
