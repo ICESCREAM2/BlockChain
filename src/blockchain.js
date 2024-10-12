@@ -27,6 +27,7 @@ class Blockchain{
         //console.log(this.isValidBlock(newBlock))
         if(this.isValidBlock(newBlock) && this.isValidChain()){
             this.blockchain.push(newBlock)
+            return newBlock
         }else{
             console.log("Error! Invaild Block",newBlock)
         }
@@ -92,10 +93,12 @@ class Blockchain{
 
     isValidChain(chain = this.blockchain){
         for(let i = chain.length - 1; i >= 1 ; i--){
+            //validate all blocks except initBlock
             if(!this.isValidBlock(chain[i],chain[i-1])){
                 return false
             }
         }
+        //validate initBlock
         if(JSON.stringify(chain[0])!==JSON.stringify(initBlock)){
             return false
         }
@@ -104,11 +107,12 @@ class Blockchain{
 
 }
 
-let bc = new Blockchain()
+// let bc = new Blockchain()
 // bc.mine()
 // bc.mine()
+// bc.mine()
+// bc.blockchain[1].nonce = 2
+// bc.mine()
+// console.log(bc.blockchain)
 
-bc.mine()
-//bc.blockchain[1].nonce = 2
-bc.mine()
-console.log(bc.blockchain)
+module.exports = Blockchain
