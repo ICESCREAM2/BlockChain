@@ -22,11 +22,23 @@ class Blockchain{
         return this.blockchain.at(-1)
     }
 
-    mine(){
+    transfer(from,to,amount){
+        //signature validation(unfinished)
+        const transObj ={from,to,amount}
+        this.data.push(transObj)
+        return transObj
+    }
+    
+    
+    //Pack Transactions into a block
+    mine(address){
+        //miner get awards after minecraft 
+        this.transfer('0', address, 100)
         const newBlock = this.generateNewBlock()
         //console.log(this.isValidBlock(newBlock))
         if(this.isValidBlock(newBlock) && this.isValidChain()){
             this.blockchain.push(newBlock)
+            this.data = []
             return newBlock
         }else{
             console.log("Error! Invaild Block",newBlock)

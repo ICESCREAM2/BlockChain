@@ -9,24 +9,39 @@ function formatLog(data) {
     data = [data]
   }
   const first = data[0]
+  // get keys like index hash
   const head = Object.keys(first)
   const table = new Table({
     head: head
   , colWidths: new Array(head.length).fill(15)
   })
-  const res = data.map(v=>{
-    return head.map(h=>v[h])
-  })
+  //Access data using a key
+  const res = data.map(v=> head.map(h=>JSON.stringify(v[h],null,2)))
   
   table.push(...res);
   console.log(table.toString());
 }
 
+vorpal
+  .command('trans <from> <to> <amount>', 'transaction')
+  .action(function (args, callback) {
+    let trans = blockchain.transfer(args.from, args.to, args.amount)
+    formatLog(trans)
+    callback();
+  });
 
 vorpal
-  .command('mine', 'add new blocks to the chain')
+  .command('detail <index>', 'fetch blockchain details by index')
   .action(function (args, callback) {
-    const newBlock = blockchain.mine()
+    const block = blockchain.blockchain[args.index]
+    this.log(JSON.stringify(block, null, 2))
+    callback();
+  });
+
+vorpal
+  .command('mine <address>', 'pack new transactions')
+  .action(function (args, callback) {
+    const newBlock = blockchain.mine(args.address)
     if (newBlock) {
       formatLog(newBlock)
     }
@@ -34,18 +49,12 @@ vorpal
   });
 
 vorpal
-  .command('chain', 'add new blocks to the chain')
+  .command('chain', 'display blockchain')
   .action(function (args, callback) {
     formatLog(blockchain.blockchain);
     callback();
   });
 
-// vorpal
-//   .command('hello', 'greeting.')
-//   .action(function(args, callback) {
-//     this.log('hello blockchain');
-//     callback();
-//   });
 
 console.log('weclome to chainblock')
 vorpal.exec('help')
