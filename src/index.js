@@ -26,7 +26,19 @@ vorpal
   .command('trans <from> <to> <amount>', 'transaction')
   .action(function (args, callback) {
     let trans = blockchain.transfer(args.from, args.to, args.amount)
-    formatLog(trans)
+    if(trans){
+      formatLog(trans)
+    }
+    callback();
+  });
+
+vorpal
+  .command('balance <address>', 'check balance')
+  .action(function (args, callback) {
+    const balance = blockchain.balance(args.address)
+    if(balance){
+      formatLog({address:args.address,balance})
+    }
     callback();
   });
 

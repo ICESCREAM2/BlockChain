@@ -23,13 +23,42 @@ class Blockchain{
     }
 
     transfer(from,to,amount){
-        //signature validation(unfinished)
+        //signature validation(finished)
+        if(from != '0'){
+            if(this.balance(from) < amount){
+                console.log('not enough balance',from,to,amount)
+                return
+            }
+        }
         const transObj ={from,to,amount}
         this.data.push(transObj)
         return transObj
     }
+
+    balance(address){
+        let balance = 0
+        this.blockchain.forEach(block=>{
+            if(!Array.isArray(block.data)){
+                //filter initblock
+                return
+            }
+            block.data.forEach(trans =>{
+                if(trans.from == address){
+                    balance -= trans.amount
+                }
+                if(trans.to == address){
+                    balance += trans.amount
+                }
+            })
+        })
+        if(!balance){
+            console.log('no this user',address)
+                return
+        }
+        return balance
+    }
     
-    
+
     //Pack Transactions into a block
     mine(address){
         //miner get awards after minecraft 
