@@ -1,4 +1,6 @@
 const crypto = require('crypto')
+const dgram = require('dgram')
+
 
 const initBlock = {
     index: 0,
@@ -14,10 +16,69 @@ class Blockchain{
         this.blockchain = [initBlock]
         this.data = []
         this.difficulty = 2
+        this.peers =[]
+        this.seed ={port : 8001, address : 'localhost'}
+        this.udp = dgram.createSocket('udp4')
+        this.init()
+
         //const hash = this.computeHash(0,'0',new Date().getTime(),'HELLO WORLD',1)
         //console.log(hash)
     }
+    
+    // init p2p network
+    init(){
+        this.bindP2P()
+        this.bindExit()
+    }
 
+    bindP2P(){
+        this.udp.on('message',(data,remote)=>{
+            const {address,port} = remote
+            const action = JSON.parse(data)
+
+            if(action.type){
+                this.dispatch(action,{address,port})
+            }
+        })
+
+        this.udp.on('listening',()=>{
+            const address = this.udp.address()
+            console.log('[DATA]: udp finished listening  The port is : '+address.port)
+        })
+
+        //dinstingush seed and node
+        const port = Number(process.argv[2]) || 0   
+        this.startNode(port)
+
+    }
+
+    bindExit(){
+        process.on('exit',()=>{
+            console.log('[DATA]: GOOD BYE')
+        })
+    }
+
+    startNode(port){
+        this.udp.bind(port)
+
+        if(port !== 8001){
+            this.send({
+                type:'newpeer'  
+            },this.seed.port,this.seed.address)
+        }
+    }
+    send(message,port,address){
+        this.udp.send(JSON.stringify(message),port,address)
+    }
+    dispatch(action,remote){
+        switch(action.type){
+            case 'newpeer':
+                console.log('Hello World')
+                break
+            default:
+                console.log('unknown action')
+        }
+    }
     getLastBlock(){
         return this.blockchain.at(-1)
     }

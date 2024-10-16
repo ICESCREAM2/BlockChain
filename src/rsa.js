@@ -17,6 +17,7 @@ const keys = generateKeys()
 function getPub(prv) {
     return ec.keyFromPrivate(prv).getPublic('hex').toString()
 }
+
 function generateKeys() {
     const fileName = './wallet.json'
     try {
@@ -51,6 +52,7 @@ function verify({from,to,amount},pub){
     const bufferMsg = Buffer.from(`${from}-${to}-${amount}`)
     return keypairTemp.verify(bufferMsg,signature)
 }
+
 const trans = {from:'me',to:'you',amount:100}
 const trans2 = {from:'me',to:'you',amount:101}
 const signature = sign(trans)
