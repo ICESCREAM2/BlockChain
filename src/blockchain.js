@@ -18,6 +18,7 @@ class Blockchain{
         this.difficulty = 2
         this.peers =[]
         this.seed ={port : 8001, address : 'localhost'}
+        this.remote = {}
         this.udp = dgram.createSocket('udp4')
         this.init()
 
@@ -33,11 +34,11 @@ class Blockchain{
 
     bindP2P(){
         this.udp.on('message',(data,remote)=>{
-            const {address,port} = remote
+            const {port,address} = remote
             const action = JSON.parse(data)
 
             if(action.type){
-                this.dispatch(action,{address,port})
+                this.dispatch(action,{port,address})
             }
         })
 
@@ -60,24 +61,84 @@ class Blockchain{
 
     startNode(port){
         this.udp.bind(port)
-
+        // not seednode, send message to seed node 
         if(port !== 8001){
             this.send({
                 type:'newpeer'  
             },this.seed.port,this.seed.address)
+        this.peers.push(this.seed)
         }
     }
+
     send(message,port,address){
         this.udp.send(JSON.stringify(message),port,address)
     }
+
+    boardcast(action){
+        this.peers.forEach(v=>{
+            this.send(action,v.port,v.address)
+        })
+    }
     dispatch(action,remote){
+        console.log('Receive message from p2p network',action)
         switch(action.type){
             case 'newpeer':
-                console.log('Hello World')
+                //what the seed do
+                //1.get public ip and port
+                //2.get list of all nodes
+                //3.broadcast
+                this.send({
+                    type:'remoteAddress',
+                    data: remote
+                },remote.port,remote.address)
+                this.send({
+                    type:'peerlist',
+                    data:this.peers
+                },remote.port,remote.address)
+
+                this.boardcast({
+                    type:'sayHi',
+                    data:remote
+                })
+                this.peers.push(remote)
+                console.log('Hello New Friend',remote)
                 break
+            
+            case 'remoteAddress':
+                this.remote = action.data
+                break 
+            
+            case 'peerlist':
+                const newPeers = action.data
+                this.addPeers(newPeers)
+                break
+            
+            case 'sayHi':
+                let remotePeer = action.data
+                this.peers.push(remotePeer)
+                console.log('Hi, great to meet you')
+                this.send({type:'hi' ,data:'hi'},remotePeer.port,remotePeer.address)
+                break
+            
+            case 'hi':
+                console.log(`${remote.address}:${remote.port} :${action.data}`)
+                break
+
             default:
                 console.log('unknown action')
         }
+    }
+
+    isEqualPeer(peer1,peer2){
+        return peer1.address == peer2.address && peer1.port == peer2.port
+    }
+
+    addPeers(peers){
+        peers.forEach(peer=>{
+            if(!this.peers.find(v=>this.isEqualPeer(peer,v))){
+                this.peers.push(peer)
+            }
+        })
     }
     getLastBlock(){
         return this.blockchain.at(-1)

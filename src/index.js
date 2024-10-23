@@ -5,6 +5,9 @@ const blockchain = new Blockchain()
 
 
 function formatLog(data) {
+  if(!data || data.length ==0){
+    return
+  }
   if (!Array.isArray(data)) {
     data = [data]
   }
@@ -60,10 +63,29 @@ vorpal
     callback();
   });
 
+
 vorpal
-  .command('chain', 'display blockchain')
+  .command('blockchain', 'display blockchain')
   .action(function (args, callback) {
     formatLog(blockchain.blockchain);
+    callback();
+  });
+
+  vorpal
+  .command('peers', 'check network node list')
+  .action(function (args, callback) {
+    formatLog(blockchain.peers)
+    callback();
+  });
+
+
+  vorpal
+  .command('chat <msg>', 'say Hi to the network')
+  .action(function (args, callback) {
+    blockchain.boardcast({
+      type:'hi',
+      data: args.msg
+    })
     callback();
   });
 
