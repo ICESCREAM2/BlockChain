@@ -1,4 +1,5 @@
 const crypto = require('crypto')
+const rsa = require('./rsa')
 const dgram = require('dgram')
 
 
@@ -116,7 +117,7 @@ class Blockchain{
             case 'sayHi':
                 let remotePeer = action.data
                 this.peers.push(remotePeer)
-                console.log('Hi, great to meet you')
+                console.log('Hi, great to meet you',remotePeer.port,remotePeer.address)
                 this.send({type:'hi' ,data:'hi'},remotePeer.port,remotePeer.address)
                 break
             
@@ -152,9 +153,16 @@ class Blockchain{
                 return
             }
         }
-        const transObj ={from,to,amount}
-        this.data.push(transObj)
-        return transObj
+        
+        const sig = rsa.sign({from,to,amount})
+        const sigTrans = {from,to,amount,sig}
+        this.data.push(sigTrans)
+        return sigTrans
+    }
+
+    isValidTransfer(trans){
+        //public key is same as address
+        return rsa.verify(trans,trans.from)
     }
 
     balance(address){
@@ -183,6 +191,11 @@ class Blockchain{
 
     //Pack Transactions into a block
     mine(address){
+        //valid all the transactions
+        if(!this.data.every(v=>this.isValidTransfer(v))){
+            console.log('trans not valid')
+        }
+        
         //miner get awards after minecraft 
         this.transfer('0', address, 100)
         const newBlock = this.generateNewBlock()

@@ -2,6 +2,7 @@ const vorpal = require('vorpal')();
 const Table = require('cli-table')
 const Blockchain = require('./blockchain')
 const blockchain = new Blockchain()
+const rsa = require('./rsa')
 
 
 function formatLog(data) {
@@ -26,9 +27,9 @@ function formatLog(data) {
 }
 
 vorpal
-  .command('trans <from> <to> <amount>', 'transaction')
+  .command('trans <to> <amount>', 'transaction')
   .action(function (args, callback) {
-    let trans = blockchain.transfer(args.from, args.to, args.amount)
+    let trans = blockchain.transfer(rsa.keys.pub, args.to, args.amount)
     if(trans){
       formatLog(trans)
     }
@@ -54,9 +55,9 @@ vorpal
   });
 
 vorpal
-  .command('mine <address>', 'pack new transactions')
+  .command('mine', 'pack new transactions')
   .action(function (args, callback) {
-    const newBlock = blockchain.mine(args.address)
+    const newBlock = blockchain.mine(rsa.keys.pub)
     if (newBlock) {
       formatLog(newBlock)
     }
@@ -64,10 +65,17 @@ vorpal
   });
 
 
-vorpal
+  vorpal
   .command('blockchain', 'display blockchain')
   .action(function (args, callback) {
     formatLog(blockchain.blockchain);
+    callback();
+  });
+
+  vorpal
+  .command('pub', 'display public address')
+  .action(function (args, callback) {
+    console.log(rsa.keys.pub);
     callback();
   });
 
