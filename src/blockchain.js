@@ -101,10 +101,23 @@ class Blockchain{
                     type:'sayHi',
                     data:remote
                 })
+                //4. send all blocks
+                this.send({
+                    type:'blockchain',
+                    data:JSON.stringify({
+                        blockchain: this.blockchain
+                    })
+                },remote.port,remote.address)
                 this.peers.push(remote)
                 console.log('Hello New Friend',remote)
                 break
             
+            case 'blockchain':
+                let allData = JSON.parse(action.data)
+                let newChain = allData.blockchain
+                this.replaceChain(newChain)
+                break
+
             case 'remoteAddress':
                 this.remote = action.data
                 break 
@@ -124,6 +137,8 @@ class Blockchain{
             case 'hi':
                 console.log(`${remote.address}:${remote.port} :${action.data}`)
                 break
+            
+            
 
             default:
                 console.log('unknown action')
@@ -279,6 +294,19 @@ class Blockchain{
             return false
         }
         return true
+    }
+
+    replaceChain(newChain){
+        if(newChain.length === 1){
+            //filter initblock
+            return
+        }
+        if(this.isValidChain(newChain) && newChain.length > this.blockchain.length){
+            //deep copy
+            this.blockchain = JSON.parse(JSON.stringify(newChain))
+        }else{
+            console.log('[ERR]: INVALID CHAIN')
+        }
     }
 
 }
