@@ -138,6 +138,25 @@ class Blockchain{
                 console.log(`${remote.address}:${remote.port} :${action.data}`)
                 break
             
+            case 'mine':
+                const lastBlock = this.getLastBlock()
+                if(lastBlock.hash === action.data.hash){
+                    //repeated message
+                    return
+                }
+
+                if(this.isValidBlock(action.data, lastBlock)){
+                    console.log('[DATA] one friend mine success')
+                    this.blockchain.push(action.data)
+                    this.data = []
+                    this.boardcast({
+                        type: 'mine',
+                        data: action.data
+                    })
+                }else{
+                    console.log('INVALID BLOCK')
+                }
+                break
             
 
             default:
@@ -218,11 +237,15 @@ class Blockchain{
         if(this.isValidBlock(newBlock) && this.isValidChain()){
             this.blockchain.push(newBlock)
             this.data = []
+            console.log('[DATA] mine success')
+            this.boardcast({
+                type:'mine',
+                data:newBlock
+            })
             return newBlock
         }else{
             console.log("Error! Invaild Block",newBlock)
         }
-       
     }
 
     generateNewBlock(){
