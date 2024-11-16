@@ -90,10 +90,17 @@ vorpal
   vorpal
   .command('chat <msg>', 'say Hi to the network')
   .action(function (args, callback) {
-    blockchain.boardcast({
+    blockchain.broadcast({
       type:'hi',
       data: args.msg
     })
+    callback();
+  });
+
+  vorpal
+  .command('pending', 'view unpackaged transactions')
+  .action(function (args, callback) {
+    formatLog(blockchain.data)
     callback();
   });
 

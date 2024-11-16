@@ -75,7 +75,7 @@ class Blockchain{
         this.udp.send(JSON.stringify(message),port,address)
     }
 
-    boardcast(action){
+    broadcast(action){
         this.peers.forEach(v=>{
             this.send(action,v.port,v.address)
         })
@@ -97,7 +97,7 @@ class Blockchain{
                     data:this.peers
                 },remote.port,remote.address)
 
-                this.boardcast({
+                this.broadcast({
                     type:'sayHi',
                     data:remote
                 })
@@ -105,7 +105,8 @@ class Blockchain{
                 this.send({
                     type:'blockchain',
                     data:JSON.stringify({
-                        blockchain: this.blockchain
+                        blockchain: this.blockchain,
+                        trans:this.data
                     })
                 },remote.port,remote.address)
                 this.peers.push(remote)
@@ -115,7 +116,9 @@ class Blockchain{
             case 'blockchain':
                 let allData = JSON.parse(action.data)
                 let newChain = allData.blockchain
+                let newTrans = allData.trans
                 this.replaceChain(newChain)
+                this.replaceTrans(newTrans)
                 break
 
             case 'remoteAddress':
@@ -137,7 +140,18 @@ class Blockchain{
             case 'hi':
                 console.log(`${remote.address}:${remote.port} :${action.data}`)
                 break
-            
+
+
+            case 'trans':
+                //get transaction message
+                //Check for duplicate transactions
+                if(!this.data.find(v=>this.isEqualObj(v,action.data))){
+                    console.log('NEW TRANSACTION MESSAGE')
+                    this.addTrans(action.data)
+                    this.broadcast({type:'trans', data:action.data})
+                }
+                break
+
             case 'mine':
                 const lastBlock = this.getLastBlock()
                 if(lastBlock.hash === action.data.hash){
@@ -149,7 +163,7 @@ class Blockchain{
                     console.log('[DATA] one friend mine success')
                     this.blockchain.push(action.data)
                     this.data = []
-                    this.boardcast({
+                    this.broadcast({
                         type: 'mine',
                         data: action.data
                     })
@@ -162,6 +176,15 @@ class Blockchain{
             default:
                 console.log('unknown action')
         }
+    }
+
+    isEqualObj(obj1,obj2){
+        const key1 = Object.keys(obj1)
+        const key2 = Object.keys(obj2)
+        if(key1.length !== key2.length){
+            return false
+        }
+        return key1.every(key=>obj1[key] === obj2[key])
     }
 
     isEqualPeer(peer1,peer2){
@@ -180,23 +203,35 @@ class Blockchain{
     }
 
     transfer(from,to,amount){
+
+        const timestamp = new Date().getTime()
+        const signature = rsa.sign({from,to,amount,timestamp})
+        const sigTrans = {from,to,amount,timestamp,signature}
         //signature validation(finished)
         if(from != '0'){
             if(this.balance(from) < amount){
                 console.log('not enough balance',from,to,amount)
                 return
             }
+            this.broadcast({
+                type:'trans',
+                data:sigTrans
+            })
         }
-        
-        const sig = rsa.sign({from,to,amount})
-        const sigTrans = {from,to,amount,sig}
+
         this.data.push(sigTrans)
         return sigTrans
     }
-
+    
     isValidTransfer(trans){
         //public key is same as address
         return rsa.verify(trans,trans.from)
+    }
+
+    addTrans(trans){
+        if(this.isValidTransfer(trans)){
+            this.data.push(trans)
+        }
     }
 
     balance(address){
@@ -238,7 +273,7 @@ class Blockchain{
             this.blockchain.push(newBlock)
             this.data = []
             console.log('[DATA] mine success')
-            this.boardcast({
+            this.broadcast({
                 type:'mine',
                 data:newBlock
             })
@@ -329,6 +364,14 @@ class Blockchain{
             this.blockchain = JSON.parse(JSON.stringify(newChain))
         }else{
             console.log('[ERR]: INVALID CHAIN')
+        }
+    }
+
+    replaceTrans(trans){
+        if(trans.every(v=>this.isValidTransfer(v))){
+            this.data = trans
+        }else{
+            console.log('[ERR]: RECEIVE INVALID TRANSACTION')
         }
     }
 
