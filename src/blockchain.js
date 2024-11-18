@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-redeclare
 const crypto = require('crypto')
 const rsa = require('./rsa')
 const dgram = require('dgram')
@@ -113,30 +114,30 @@ class Blockchain{
                 console.log('Hello New Friend',remote)
                 break
             
-            case 'blockchain':
+            case 'blockchain':{
                 let allData = JSON.parse(action.data)
                 let newChain = allData.blockchain
                 let newTrans = allData.trans
                 this.replaceChain(newChain)
                 this.replaceTrans(newTrans)
                 break
-
+            }
             case 'remoteAddress':
                 this.remote = action.data
                 break 
             
-            case 'peerlist':
+            case 'peerlist':{
                 const newPeers = action.data
                 this.addPeers(newPeers)
                 break
-            
-            case 'sayHi':
+            }
+            case 'sayHi':{
                 let remotePeer = action.data
                 this.peers.push(remotePeer)
                 console.log('Hi, great to meet you',remotePeer.port,remotePeer.address)
                 this.send({type:'hi' ,data:'hi'},remotePeer.port,remotePeer.address)
                 break
-            
+            }
             case 'hi':
                 console.log(`${remote.address}:${remote.port} :${action.data}`)
                 break
@@ -152,7 +153,7 @@ class Blockchain{
                 }
                 break
 
-            case 'mine':
+            case 'mine':{
                 const lastBlock = this.getLastBlock()
                 if(lastBlock.hash === action.data.hash){
                     //repeated message
@@ -171,7 +172,7 @@ class Blockchain{
                     console.log('INVALID BLOCK')
                 }
                 break
-            
+            }
 
             default:
                 console.log('unknown action')
@@ -188,7 +189,7 @@ class Blockchain{
     }
 
     isEqualPeer(peer1,peer2){
-        return peer1.address == peer2.address && peer1.port == peer2.port
+        return peer1.address === peer2.address && peer1.port === peer2.port
     }
 
     addPeers(peers){
@@ -242,10 +243,10 @@ class Blockchain{
                 return
             }
             block.data.forEach(trans =>{
-                if(trans.from == address){
+                if(trans.from === address){
                     balance -= trans.amount
                 }
-                if(trans.to == address){
+                if(trans.to === address){
                     balance += trans.amount
                 }
             })

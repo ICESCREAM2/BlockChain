@@ -23,13 +23,13 @@ function generateKeys() {
     try {
         let res = JSON.parse(fs.readFileSync(fileName))
         //validation
-        if (res.prv && res.pub && getPub(res.prv) == res.pub) {
+        if (res.prv && res.pub && getPub(res.prv) === res.pub) {
             keypair = ec.keyFromPrivate(res.prv)
             return res
         } else {
-            throw 'not valid data in wallet.json'
+            throw new Error('not valid data in wallet.json')
         }
-    } catch (error) {
+    } catch {
         const res = {
             prv: keypair.getPrivate('hex').toString(),
             pub: keypair.getPublic('hex').toString()
